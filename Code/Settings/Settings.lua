@@ -36,6 +36,7 @@ local HOTKEYFRAME_VALUETEXT_GAP = 4;
 local TAB_BUTTON_GAP = 4;
 
 local DISABLED_TEXTURE_ALPHA = 0.2;
+local DISABLED_OPTION_ALPHA = 0.5;
 
 local PREVIEW_PATH = "Interface/AddOns/DialogueUI/Art/PreviewPicture/";
 
@@ -550,6 +551,10 @@ local function OutlineSparklesSupported_Validation()
     return addon.IS_RETAIL  --Forever has no NPC outline for now
 end
 
+local function InputDevice_IsAutoDetected()
+    return GetDBValue("InputDeviceAutoDetect")
+end
+
 local function UseItemHotkey_Tooltip()
     local deviceID = GetDBValue("InputDevice");
     if deviceID == 2 then
@@ -666,7 +671,8 @@ local Schematic = { --Scheme
     {
         tabName = L["Control"],  --Cate3
         options = {
-            {type = "ArrowOption", name = L["Input Device"], dbKey = "InputDevice", description = L["Input Device Desc"],
+            {type = "Checkbox", name = L["Auto Detect Input Device"], description = L["Auto Detect Input Device Desc"], dbKey = "InputDeviceAutoDetect", updateTabAfterClicks = true},
+            {type = "ArrowOption", name = L["Input Device"], dbKey = "InputDevice", description = L["Input Device Desc"], disabledFunc = InputDevice_IsAutoDetected,
                 choices = {
                     {dbValue = 1, valueText = L["Input Device KBM"]},
                     {dbValue = 2, valueText = L["Input Device Xbox"], tooltip = L["Input Device Xbox Tooltip"]},
@@ -1535,6 +1541,7 @@ function DUIDialogSettingsOptionMixin:SetData(optionData)
         self:SetCustomButton(optionData);
     end
     self.widgetType = optionData.type;
+    self:SetAlpha((optionData.disabledFunc and optionData.disabledFunc() and DISABLED_OPTION_ALPHA) or 1);
 
     if isSubheader then
         self.Label:SetText(string.upper(optionData.name));
@@ -1733,8 +1740,8 @@ do  --ArrowOption
             end
         end
 
-        self.LeftArrow:SetEnabled(id ~= 1);
-        self.RightArrow:SetEnabled(id ~= self.numChoices);
+        self.LeftArrow:SetEnabled(not self.isDisabled and id ~= 1);
+        self.RightArrow:SetEnabled(not self.isDisabled and id ~= self.numChoices);
     end
 
     function DUIDialogSettingsArrowOptionMixin:SelectNextChoice()
@@ -1775,6 +1782,8 @@ do  --ArrowOption
 
     function DUIDialogSettingsArrowOptionMixin:SelectChoiceByDelta(delta)
         --right = 1, left = -1
+        if self.isDisabled then return end;
+
         local anyChange;
 
         if delta > 0 then
@@ -1818,6 +1827,7 @@ do  --ArrowOption
         self.dbKey = optionData.dbKey;
         self.valueTextFormatter = optionData.valueTextFormatter;
         self.realignAfterClicks = optionData.realignAfterClicks;
+        self.isDisabled = optionData.disabledFunc and optionData.disabledFunc();
 
         self:SetNumChoices(#self.choices);
 

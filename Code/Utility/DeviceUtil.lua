@@ -1,5 +1,6 @@
 local _, addon = ...
 local GetDBValue = addon.GetDBValue;
+local SetDBValue = addon.SetDBValue;
 
 local DeviceUtil = {};
 addon.DeviceUtil = DeviceUtil;
@@ -100,4 +101,53 @@ end
 
 function DeviceUtil.IsAltDown(key, down)
     return down == 1 and (key == "LALT" or key == "RALT")
+end
+
+
+do  --Auto Detect Input Device
+    local LABEL_STYLE_DEVICE = {
+        Letters = 2,
+        Shapes = 3,
+        Reverse = 4,
+    };
+
+    local function DetectInputDevice()
+        local gamepadID = C_GamePad and C_CVar.GetCVarBool("GamePadEnable") and C_GamePad.GetActiveDeviceID();
+        if not gamepadID then
+            return 1
+        end
+
+        local state = C_GamePad.GetDeviceMappedState(gamepadID);
+        return (state and LABEL_STYLE_DEVICE[state.labelStyle]) or 2
+    end
+
+    local function UpdateInputDevice()
+        if not GetDBValue("InputDeviceAutoDetect") then return end;
+
+        local deviceID = DetectInputDevice();
+        if deviceID ~= GetDBValue("InputDevice") then
+            SetDBValue("InputDevice", deviceID);
+        end
+    end
+
+    local EL = CreateFrame("Frame");
+    EL:RegisterEvent("PLAYER_LOGIN");
+    EL:RegisterEvent("CVAR_UPDATE");
+    for _, event in ipairs({"GAME_PAD_CONNECTED", "GAME_PAD_DISCONNECTED", "GAME_PAD_ACTIVE_CHANGED"}) do
+        if C_EventUtils.IsEventValid(event) then
+            EL:RegisterEvent(event);
+        end
+    end
+
+    EL:SetScript("OnEvent", function(self, event, cvarName)
+        if event == "CVAR_UPDATE" and cvarName ~= "GamePadEnable" then return end;
+        UpdateInputDevice();
+    end);
+
+    addon.CallbackRegistry:Register("SettingChanged.InputDeviceAutoDetect", function(dbValue, userInput)
+        --The DB load also triggers this; PLAYER_LOGIN does the first detection
+        if userInput then
+            UpdateInputDevice();
+        end
+    end);
 end
