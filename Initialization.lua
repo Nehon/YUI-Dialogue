@@ -40,6 +40,7 @@ local DefaultValues = {
     CameraZoomMultiplier = 1,                   --The smaller the further
 
     InputDevice = 1,                            --1:K&M  2:XBOX  3.PS  4.Mobile
+    InputDeviceAutoDetect = true,
     UseCustomBindings = false,
     PrimaryControlKey = 1,                      --1: Space  2:Interact Key
     ScrollDownThenAcceptQuest = false,

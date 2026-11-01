@@ -39,12 +39,13 @@ local function CheckActionThrottled(actionName)
         Throttler = CreateFrame("Frame");
     end
 
+    Throttler:SetScript("OnUpdate", Throttler_OnUpdate);
+
     if not Counter[actionName] then
         Counter[actionName] = 0;
         return false
     end
 
-    Throttler:SetScript("OnUpdate", Throttler_OnUpdate);
     return true
 end
 API.CheckActionThrottled = CheckActionThrottled;
