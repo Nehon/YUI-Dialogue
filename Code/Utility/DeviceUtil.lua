@@ -48,9 +48,9 @@ function DeviceUtil:GetDeviceMapping()
     if deviceID == 2 then
         return Mapping.XBOX
     elseif deviceID == 3 then
-        return Mapping.KBM
-    elseif deviceID == 4 then
         return Mapping.PS
+    elseif deviceID == 4 then
+        return Mapping.SWITCH
     else
         return Mapping.KBM
     end
